@@ -29,7 +29,7 @@ const Layout = () => {
         Object.values(checkClientAccount).some(account => account.currency === currency) ||
         currency === 'demo' ||
         currency === '';
-    const [clientHasCurrency, setClientHasCurrency] = useState(ifClientAccountHasCurrency);
+    const [clientHasCurrency] = useState(ifClientAccountHasCurrency);
 
     const validCurrencies = [...fiat_currencies_display_order, ...crypto_currencies_display_order];
     const query_currency = (getQueryParams.get('account') ?? '')?.toUpperCase();
@@ -40,14 +40,24 @@ const Layout = () => {
     const validateApiAccounts = ({ data }: any) => {
         if (data.msg_type === 'authorize') {
             api_accounts.push(data.authorize.account_list || []);
-            api_accounts?.flat().map(data => {
-                Object.values(checkClientAccount).map(key => {
-                    if (data.currency !== key.currency) {
-                        console.log('setClientHasCurrency');
-                        setClientHasCurrency(false);
-                    }
-                });
+            console.log('api_accounts', api_accounts);
+            console.log('checkClientAccount', checkClientAccount);
+            const allCurrencies = new Set(Object.values(checkClientAccount).map(acc => acc.currency));
+
+            const hasMissingCurrency = api_accounts?.flat().some(data => {
+                console.log('Checking currency:', data.currency);
+                if (!allCurrencies.has(data.currency)) {
+                    console.log('Missing currency detected:', data.currency);
+                    return true;
+                }
+                return false;
             });
+
+            if (hasMissingCurrency) {
+                console.log('setClientHasCurrency(false)');
+            } else {
+                console.log('All currencies are present');
+            }
 
             if (subscription) {
                 subscription?.unsubscribe();
